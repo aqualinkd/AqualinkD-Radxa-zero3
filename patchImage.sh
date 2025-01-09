@@ -1,13 +1,6 @@
 #!/bin/bash
 
-#if [ ! $1 ]; then
-#  read -rep 'Do you want to create a WiFi connection? (y/n) ' -n 1
-#  if [[ $REPLY =~ ^[Yy]$ ]]; then
-#    image=$(downloadImage) 
-#  else 
-#    echo -e "Please pass valid image file example:-\n          $0 radxa-zero3_debian_bullseye_cli_b6.img.xz\n"
-#    exit 1
-#fi
+VERSION=0.1
 
 if [ "$EUID" -ne 0 ]; then
   echo "Please run as root"
