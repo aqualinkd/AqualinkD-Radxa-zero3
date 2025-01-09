@@ -1,0 +1,5 @@
+--- ./tmp-mnt/etc/kernel/cmdline	2024-01-04 07:27:44.000000000 +0000
++++ ./cmdline	2025-01-08 15:27:01.021526408 +0000
+@@ -1 +1 @@
+-console=ttyFIQ0,1500000n8 quiet splash loglevel=4 rw earlycon consoleblank=0 console=tty1 coherent_pool=2M irqchip.gicv3_pseudo_nmi=0 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory swapaccount=1
++quiet splash loglevel=4 rw earlycon consoleblank=0 console=tty1 coherent_pool=2M irqchip.gicv3_pseudo_nmi=0 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory swapaccount=1

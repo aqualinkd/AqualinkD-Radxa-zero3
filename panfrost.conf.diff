@@ -1,0 +1,8 @@
+--- ./tmp-mnt/etc/modprobe.d/panfrost.conf	2024-01-04 07:27:44.000000000 +0000
++++ ./panfrost.conf	2025-01-08 15:46:54.864235383 +0000
+@@ -8,4 +8,4 @@
+ # Uncomment the following line and comment above lines
+ # to use mali driver for GPU instead
+ # You will have to install desktop from vendor repo
+-#blacklist	panfrost
++blacklist	panfrost

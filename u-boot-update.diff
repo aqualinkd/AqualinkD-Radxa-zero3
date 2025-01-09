@@ -1,0 +1,20 @@
+--- ./tmp-mnt/usr/sbin/u-boot-update	2024-01-10 09:08:16.080127340 +0000
++++ ./u-boot-update	2025-01-08 15:26:00.682549124 +0000
+@@ -96,7 +96,7 @@
+ 
+ U_BOOT_ALTERNATIVES="${U_BOOT_ALTERNATIVES:-default recovery}"
+ U_BOOT_DEFAULT="${U_BOOT_DEFAULT:-l0}"
+-U_BOOT_PROMPT="${U_BOOT_PROMPT:-0}"
++U_BOOT_PROMPT="${U_BOOT_PROMPT:-1}"
+ U_BOOT_ENTRIES="${U_BOOT_ENTRIES:-all}"
+ U_BOOT_TIMEOUT="${U_BOOT_TIMEOUT:-50}"
+ U_BOOT_MENU_LABEL="${U_BOOT_MENU_LABEL:-${PRETTY_NAME:-Debian GNU/Linux kernel}}"
+@@ -163,7 +163,7 @@
+ 
+ default ${U_BOOT_DEFAULT}
+ menu title U-Boot menu
+-prompt 1
++prompt ${U_BOOT_PROMPT} 
+ timeout ${U_BOOT_TIMEOUT}
+ "
+ 

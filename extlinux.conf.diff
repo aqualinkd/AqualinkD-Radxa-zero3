@@ -1,0 +1,30 @@
+--- ./tmp-mnt/boot/extlinux/extlinux.conf	2024-01-10 09:18:04.493656429 +0000
++++ ./extlinux.conf	2025-01-08 21:53:46.250061080 +0000
+@@ -7,8 +7,8 @@
+ 
+ default l0
+ menu title U-Boot menu
+-prompt 1
+-timeout 10
++prompt 0 
++timeout 0
+ 
+ 
+ label l0
+@@ -16,13 +16,13 @@
+ 	linux /boot/vmlinuz-5.10.160-26-rk356x
+ 	initrd /boot/initrd.img-5.10.160-26-rk356x
+ 	fdtdir /usr/lib/linux-image-5.10.160-26-rk356x/
+-	
+-	append root=UUID=ecc778bf-ade9-49c5-b40e-a33fb61201e5 console=ttyFIQ0,1500000n8 quiet splash loglevel=4 rw earlycon consoleblank=0 console=tty1 coherent_pool=2M irqchip.gicv3_pseudo_nmi=0 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory swapaccount=1
++	fdtoverlays  /boot/dtbo/rk3568-uart2-m0.dtbo
++	append root=UUID=ecc778bf-ade9-49c5-b40e-a33fb61201e5 quiet splash loglevel=4 rw earlycon consoleblank=0 console=tty1 coherent_pool=2M irqchip.gicv3_pseudo_nmi=0 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory swapaccount=1
+ 
+ label l0r
+ 	menu label Debian GNU/Linux 11 (bullseye) 5.10.160-26-rk356x (rescue target)
+ 	linux /boot/vmlinuz-5.10.160-26-rk356x
+ 	initrd /boot/initrd.img-5.10.160-26-rk356x
+ 	fdtdir /usr/lib/linux-image-5.10.160-26-rk356x/
+-	append root=UUID=ecc778bf-ade9-49c5-b40e-a33fb61201e5 console=ttyFIQ0,1500000n8 splash loglevel=4 rw earlycon consoleblank=0 console=tty1 coherent_pool=2M irqchip.gicv3_pseudo_nmi=0 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory swapaccount=1 single
++	append root=UUID=ecc778bf-ade9-49c5-b40e-a33fb61201e5 quiet splash loglevel=4 rw earlycon consoleblank=0 console=tty1 coherent_pool=2M irqchip.gicv3_pseudo_nmi=0 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory swapaccount=1 single
+ 	
