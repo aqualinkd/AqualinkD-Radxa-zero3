@@ -1,9 +1,13 @@
 #!/bin/bash
 
-if [ ! $1 ]; then
-  echo -e "Please pass valid image file example:-\n          $0 radxa-zero3_debian_bullseye_cli_b6.img.xz\n"
-  exit 1
-fi
+#if [ ! $1 ]; then
+#  read -rep 'Do you want to create a WiFi connection? (y/n) ' -n 1
+#  if [[ $REPLY =~ ^[Yy]$ ]]; then
+#    image=$(downloadImage) 
+#  else 
+#    echo -e "Please pass valid image file example:-\n          $0 radxa-zero3_debian_bullseye_cli_b6.img.xz\n"
+#    exit 1
+#fi
 
 if [ "$EUID" -ne 0 ]; then
   echo "Please run as root"
@@ -11,8 +15,8 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 
+MOUNT="./tmp-mnt"
 
-mnt=./tmp-mnt
 PANFROST="/etc/modprobe.d/panfrost.conf"
 UBOOT_MENU="/usr/share/u-boot-menu/conf.d/radxa.conf"
 UBOOT_UPDATE="/usr/sbin/u-boot-update"
@@ -35,6 +39,14 @@ function checkCommand() {
     error "Command '$1' not found, please check path or install if missing!"
     exit 1
   fi
+}
+
+function downloadImage() {
+  msg "Downloading Image"
+  curl -LfO https://github.com/radxa-build/radxa-zero3/releases/download/b6/radxa-zero3_debian_bullseye_cli_b6.img.xz
+           
+
+  echo "radxa-zero3_debian_bullseye_cli_b6.img.xz"
 }
 
 function getOffset() {
@@ -69,22 +81,27 @@ function makeBackup() {
 }
 
 function patchFile() {
-  file="$mnt/$1"
+  file="$MOUNT/$1"
 
-  # Let patch make the back file.
+#  Let patch make the back file.
 #  makeBackup "$file"
 #  if [ ! $0 ]; then
 #    error "Not patching file '$1'"
 #    return
 #  fi
 
-  if [ ! -f "$1" ]; then
-    error "File '$1' does not exist, can't patch"
-    echo 1
-    return
-  fi
+#  if [ ! -f "$1" ]; then
+#    error "File '$1' does not exist, can't patch"
+#    return
+#  fi
 
   filename=$(basename "$file")
+  
+  # Try to download if missing
+  if [ ! -f ./"$filename".diff ]; then
+    msg "Downloading patch for '$filename'"
+    curl --fail --silent --show-error "https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/main/$filename.diff" -o ./"$filename".diff
+  fi
 
   if [ -f ./"$filename".diff ]; then
     msg "using $filename.diff"
@@ -112,20 +129,24 @@ function enableUART2() {
   ARCH=$(dpkg --print-architecture)
   case $ARCH in 
     arm64)
-      chroot $mnt /usr/sbin/u-boot-update
+      chroot $MOUNT /usr/sbin/u-boot-update
+      echo 0
     ;;
     *)
       msg "WARNING: Source OS is not amd64, forcing a extLinux configuration, please run 'u-boot-update' once system is running!"
       patchFile "$EXTLINUX_CONFIG"
+      echo 1
     ;;
   esac
+
+  return
 }
 
 function createWiFi() {
   read -p "WiFi SSID :" wifissid
   read -p "WiFi Password :" wifipasswd
 
-  wififile="$mnt/etc/NetworkManager/system-connections/$wifissid.nmconnection"
+  wififile="$MOUNT/etc/NetworkManager/system-connections/$wifissid.nmconnection"
 
 cat << EOF > "$wififile" 
 [connection]
@@ -161,21 +182,40 @@ EOF
  msg "Created rudimentary WiFi config '$wififile', if it doesn't work, please delete file and use rsetup or nmcli to configure WiFi"
 }
 
+function cleanup() {
+  # Check if mounted and unmount, blindly unmount and hide any errors
+  umount $MOUNT > /dev/null 2>&1
+  rmdir $MOUNT > /dev/null 2>&1
+}
 
 ########################################################
 #                    main                              #
 ########################################################
 
+is_zipped=0
+showWifi=0
+showUbootupdate=0
+showInitramfs=0
 
 checkCommand mount
 checkCommand awk 
 checkCommand chroot
 checkCommand patch
 checkCommand dpkg
-
-
+checkCommand curl
+#checkCommand xz
 
 image=$1
+
+if [ ! $1 ]; then
+  read -rep 'No immage passed on command line, do you want to downlod Radxa-zero3 image? (y/n) ' -n 1
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    image=$(downloadImage)
+  else
+    echo -e "Please pass valid image file example:-\n          $0 radxa-zero3_debian_bullseye_cli_b6.img.xz\n"
+    exit 1
+  fi
+fi
 
 extension="${image##*.}"
 
@@ -185,6 +225,8 @@ if [ ! -f $image ]; then
 fi
 
 if [ "$extension" == "xz" ]; then
+  checkCommand xz
+  is_zipped=1
   msg "Decompressing $image"
   xz --decompress "$image"
   # Remove extension .xz
@@ -212,16 +254,20 @@ if [ $offset -ne 348127232 ]; then
   fi
 fi
 
-mount -o loop,rw,sync,offset=$offset $image $mnt
+if [ ! -d "$MOUNT" ]; then
+  mkdir "$MOUNT"
+fi
+
+mount -o loop,rw,sync,offset=$offset $image $MOUNT
 if [ ! $? ]; then
   error "Mounting image!"
   exit 1
 fi
 
 # second check for mount
-if [ ! -f "$mnt/$PANFROST" ]; then
+if [ ! -f "$MOUNT/$PANFROST" ]; then
   error "Doesn't look like image mounted correctly and/or incorrect image"
-  umount "$mnt"
+  umount "$MOUNT"
   exit 1
 fi
 
@@ -229,23 +275,43 @@ patchFile "$PANFROST"
 
 # Don't seem to need to run this, would also only work on amr64 arch so leaving it out.
 #chroot ./tmp-mnt /usr/sbin/update-initramfs -u
+# Since we did run command, show update message
+showInitramfs=1
 
 
-read -rep $'If you want to use standard UART2 for RS485/232 for GPIO pins 8 & 10 (ie for a RS485 Hat) then you need to enable it now.\
-This will also disable U-Boot menu over serial connection & Radxa serial debugging.\
+read -rep $'If you want to use standard UART2 for RS485/232 for GPIO pins 8 & 10 (ie for a RS485 Hat) then you need to enable it now.
+This will also disable U-Boot menu over serial connection & Radxa serial debugging.
 Do you want to enable UART2? (y/n) ' -n 1
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-  enableUART2
+  showUbootupdate=$(enableUART2)
 fi
 
 read -rep 'Do you want to create a WiFi connection? (y/n) ' -n 1
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   createWiFi
+  showWifi=1
 fi
 
-umount $mnt
-rmdir $mnt
+umount $MOUNT
+rmdir $MOUNT
+
+if [ $is_zipped -eq 1 ]; then
+  msg "Compressing '$image'"
+  xz "$image"
+  image="$image".xz
+fi
+
+msg "Image '$image' is ready, please burn to CF or load to eMMC"
+
+msg "Once system new image has booted, run the following command(s)"
+if [ $showUbootupdate -eq 1 ]; then
+  msg "u-boot-update"
+fi
+if [ $showInitramfs -eq 1 ]; then
+  msg "update-initramfs -u"
+fi
+
 
 exit
 
