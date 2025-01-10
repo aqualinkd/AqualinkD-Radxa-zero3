@@ -8,6 +8,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 
+
 MOUNT="./tmp-mnt"
 
 PANFROST="/etc/modprobe.d/panfrost.conf"

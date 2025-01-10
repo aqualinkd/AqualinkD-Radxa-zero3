@@ -21,7 +21,6 @@ https://github.com/radxa-build/radxa-zero3/releases/tag/b6
 
 #
 # To Use
-This script is designed for Linux machines.
 
 To use, simply download `patchImage.sh` script and run it passing in the Radxa OS image to patch ie
 ```
