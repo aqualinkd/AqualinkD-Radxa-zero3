@@ -21,6 +21,7 @@ https://github.com/radxa-build/radxa-zero3/releases/tag/b6
 
 #
 # To Use
+This script will only work on a Linux device, ARM64 is preferred, but will work on AMD64,ARMHF,x86
 
 To use, simply download `patchImage.sh` script and run it passing in the Radxa OS image to patch ie
 ```
