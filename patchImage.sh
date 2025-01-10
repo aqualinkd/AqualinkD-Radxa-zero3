@@ -114,7 +114,7 @@ function enableUART2() {
     if [ -f "$UART2".disabled ]; then
       mv "$UART2".disabled "$UART2"
     else
-      error "Can't find '$UART2' ($UART2.disables)"
+      error "Can't find '$UART2' ($UART2.disabled)"
     fi
   fi
 
