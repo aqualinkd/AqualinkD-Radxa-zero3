@@ -28,7 +28,7 @@ function error() {
 }
 
 function checkCommand() {
-  if ! command -v $1 2>&1 >/dev/nul; then
+  if ! command -v $1 2>&1 >/dev/null; then
     error "Command '$1' not found, please check path or install if missing!"
     exit 1
   fi
@@ -137,7 +137,7 @@ function enableUART2() {
 
 function createWiFi() {
   # create SSID if we can
-  if command -v openssl 2>&1 >/dev/nul; then
+  if command -v openssl 2>&1 >/dev/null; then
     uuid=$(openssl rand -hex 16)
     wifiuuid="uuid="${uuid:0:8}-${uuid:8:4}-${uuid:12:4}-${uuid:16:4}-${uuid:20:12}
   else
