@@ -120,7 +120,12 @@ function enableUART2() {
   fi
 
   # If we are in amd64 arch, we can run u-boot-update, if not force it manually
-  ARCH=$(dpkg --print-architecture)
+  if ! command -v dpkg 2>&1 >/dev/null; then
+    ARCH=$(dpkg --print-architecture)
+  else
+    ARCH=unknown
+  fi
+  
   case $ARCH in 
     arm64)
       chroot $MOUNT /usr/sbin/u-boot-update
@@ -204,7 +209,7 @@ checkCommand mount
 checkCommand awk 
 checkCommand chroot
 checkCommand patch
-checkCommand dpkg
+#checkCommand dpkg
 checkCommand curl
 #checkCommand xz
 
