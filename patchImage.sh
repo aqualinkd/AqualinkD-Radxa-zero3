@@ -20,7 +20,7 @@ UART2="./tmp-mnt/boot/dtbo/rk3568-uart2-m0.dtbo"
 
 
 function msg() {
-  echo "$@" >&2
+  echo -e "$@" >&2
 }
 
 function error() {
@@ -93,13 +93,13 @@ function patchFile() {
   # Try to download if missing
   if [ ! -f ./"$filename".diff ]; then
     msg "Downloading patch for '$filename'"
-    curl --fail --silent --show-error "https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/main/$filename.diff" -o ./"$filename".diff
+    curl --fail --silent --show-error "https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/main/$filename.diff" -o ./"$filename".diff 1>&2
   fi
 
   if [ -f ./"$filename".diff ]; then
     msg "using $filename.diff"
     #patch --ignore-whitespace -p0 < ./"$filename".diff
-    patch --forward --ignore-whitespace --backup --suffix=.origional "$file" ./"$filename".diff
+    patch --forward --ignore-whitespace --backup --suffix=.origional "$file" ./"$filename".diff 1>&2
   else
     error "No diff file '$filename.diff'"
   fi
@@ -136,6 +136,14 @@ function enableUART2() {
 }
 
 function createWiFi() {
+  # create SSID if we can
+  if command -v openssl 2>&1 >/dev/nul; then
+    uuid=$(openssl rand -hex 16)
+    wifiuuid="uuid="${uuid:0:8}-${uuid:8:4}-${uuid:12:4}-${uuid:16:4}-${uuid:20:12}
+  else
+    wifiuuid=""
+  fi
+
   read -p "WiFi SSID :" wifissid
   read -p "WiFi Password :" wifipasswd
 
@@ -147,6 +155,7 @@ id=$wifissid
 type=wifi
 interface-name=wlan0
 permissions=
+$wifiuuid
 
 [wifi]
 mac-address-blacklist=
@@ -172,7 +181,7 @@ EOF
 
  chmod 600 "$wififile"
 
- msg "Created rudimentary WiFi config '$wififile', if it doesn't work, please delete file and use rsetup or nmcli to configure WiFi"
+ msg "\nCreated rudimentary WiFi config '$wififile',\nif it doesn't work, please delete file and use rsetup or nmcli to configure WiFi"
 }
 
 function cleanup() {
@@ -260,7 +269,7 @@ fi
 # second check for mount
 if [ ! -f "$MOUNT/$PANFROST" ]; then
   error "Doesn't look like image mounted correctly and/or incorrect image"
-  umount "$MOUNT"
+  cleanup
   exit 1
 fi
 
@@ -286,8 +295,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   showWifi=1
 fi
 
-umount $MOUNT
-rmdir $MOUNT
+cleanup
 
 if [ $is_zipped -eq 1 ]; then
   msg "Compressing '$image'"
@@ -295,16 +303,17 @@ if [ $is_zipped -eq 1 ]; then
   image="$image".xz
 fi
 
-msg "Image '$image' is ready, please burn to CF or load to eMMC"
+msg "\nImage '$image' is ready, please burn to CF or load to eMMC"
 
-#msg "Once system new image has booted, run the following command(s)"
-#if [ $showUbootupdate -eq 1 ]; then
-#  msg "u-boot-update"
-#fi
-#if [ $showInitramfs -eq 1 ]; then
-#  msg "update-initramfs -u"
-#fi
+msg "Once system new image has booted, run the following command(s)"
+if [ $showUbootupdate -eq 1 ]; then
+  msg "u-boot-update"
+fi
+if [ $showInitramfs -eq 1 ]; then
+  msg "update-initramfs -u"
+fi
 
+msg ""
 
 exit
 
