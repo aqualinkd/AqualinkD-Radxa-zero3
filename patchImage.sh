@@ -297,13 +297,13 @@ fi
 
 msg "Image '$image' is ready, please burn to CF or load to eMMC"
 
-msg "Once system new image has booted, run the following command(s)"
-if [ $showUbootupdate -eq 1 ]; then
-  msg "u-boot-update"
-fi
-if [ $showInitramfs -eq 1 ]; then
-  msg "update-initramfs -u"
-fi
+#msg "Once system new image has booted, run the following command(s)"
+#if [ $showUbootupdate -eq 1 ]; then
+#  msg "u-boot-update"
+#fi
+#if [ $showInitramfs -eq 1 ]; then
+#  msg "update-initramfs -u"
+#fi
 
 
 exit
