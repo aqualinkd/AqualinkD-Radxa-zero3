@@ -25,10 +25,10 @@ To use, simply download `patchImage.sh` script and run it passing in the Radxa O
 ```
 ./patchImage.sh radxa-zero3_debian_bullseye_cli_b6.img
 ```
-The script will download any patches it needs from this repo, so no need to clone the repo if you don;t want ti.
+The script will download any patches it needs from this repo, so no need to clone the repo if you don't want to.
 
 ## Even easier
-The script can also download the image it you want. For an all inclusive command simply run the two commands below in a linux terminal, answer a few questions and your image will be ready.
+The script can also download the appropriate image if you want. For an all inclusive command simply run the two commands below in a linux terminal, answer a few questions and your image will be ready.
 
 ```
 cd ~ && mkdir radxa-os-patched && cd radxa-os-patched
