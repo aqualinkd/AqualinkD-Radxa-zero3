@@ -1,0 +1,288 @@
+#!/bin/bash
+#
+# Run from udev
+# /etc/udev/rules.d/98-usb-disk-mount.rules
+# ACTION=="add", SUBSYSTEM=="block", ATTRS{removable}=="1", RUN+="/path/to/this/script.sh %k"
+#
+# Run once at startup
+# crontab entry
+# @reboot /path/to/this/script.sh
+#
+# Designed to look for any unmounted VFAT volumes, mount them and look for wpa_supplicant.conf or nmcli.conf file(s)
+# and setup wifi if found
+#
+
+VERSION="0.1"
+
+#MOUNT="/tmp/wpa_supplicant"
+
+WPA_SOURCE_FNAME="wpa_supplicant.conf"
+WPA_ONETIME_FNAME="wpa_suplicant.temp.conf"
+
+NMC_SOURCE_FNAME="nmcli.conf"
+NMC_ONETIME_FNAME="nmcli.temp.conf"
+
+WPA_FNAME="wpa_supplicant-wlan0"
+WPA_LOCATION="/etc/wpa_supplicant"
+NET_INTERFACE_FILE="/etc/network/interfaces.d/wlan0.conf"
+
+SELF=$(basename "$0")
+SELFBN="${SELF%.*}"
+LOG="${SELFBN}.log"
+MOUNT="/tmp/${SELFBN}_mount"
+
+# Why I used 71 below AQD in ascii / 3.  (65+81+68) / 3 = 71.  Obviously can be any number
+UDEV_RULE="/etc/udev/rules.d/71-${SELFBN}.rules"
+
+OUTPUT="/tmp/$LOG" # This will get renamed.
+
+TRUE=0
+FALSE=1
+
+DEBUG=$TRUE
+
+# check root
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run as root"
+  exit 1
+fi
+
+log()
+{ 
+  logdebug "$*"
+  echo "$*"
+  echo "$*" | systemd-cat -t "$SELF" -p info  &>> "$OUTPUT"
+  echo "$*" 2>/dev/null >> "$OUTPUT"
+
+  #logdebug "$*"
+}
+
+logerr()
+{ 
+  logdebug "$*"
+  echo "Error: $*" >&2
+  echo "$*" | systemd-cat -t "$SELF" -p err &>> "$OUTPUT"
+  echo "ERROR: $*" 2>/dev/null >> "$OUTPUT"
+
+  #logdebug "$*"
+}
+
+logdebug() {
+  if [ $DEBUG -eq $TRUE ]; then
+    echo "$*" >> "/tmp/${LOG}.debug"
+  fi
+}
+
+function cleanup() {
+  # Check if mounted and unmount, blindly unmount and hide any errors
+  umount $MOUNT > /dev/null 2>&1
+  rmdir $MOUNT > /dev/null 2>&1
+}
+
+# This is how rsetup does it.
+function createWiFi_radxa() {
+   /usr/lib/rsetup/cli/wi-fi.sh
+
+   connect_wi-fi "$SSID" "$PASSWD"
+}
+
+function createWiFi_nmcli() {
+  local i 
+  local ssid="$1" 
+  local total_retry=10
+  local command=(nmcli device wifi connect "$ssid")
+  case $# in
+    1|2)
+      nmcli radio wifi on
+      if (( $# == 2 )); then
+        command+=(password "$2")
+      fi
+
+      for ((i = 0; i < total_retry; i++)); do
+        if "${command[@]}"; then
+          log "Wi-Fi successfully connected to $ssid."
+          IP=$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+          log "IP Address = $IP"
+          return
+        else
+          log "Failed to connect to $ssid. Retry $((i + 1)) of $total_retry."
+          sleep 1
+        fi
+      done
+
+      logerr "Wi-Fi failed to connect to $ssid after total of $total_retry retries. Quit."
+      return 1
+    ;;
+    0|*)
+      logerr "Usage: ${FUNCNAME[0]} [ssid] <password>"
+      return 1
+    ;;
+    esac
+}
+
+
+function createWiFi_WPA() {
+  
+  if [ "$1" == "temporary" ]; then
+    wpa_file="$MOUNT/$WPA_ONETIME_FNAME"
+    wpa_outfile="$MOUNT/$WPA_ONETIME_FNAME.log"
+  else
+    cp $MOUNT/$WPA_SOURCE_FNAME $WPA_LOCATION/$WPA_FNAME
+    if [ $? -ne 0 ]; then
+      logerr "Creation of '$WPA_LOCATION/$WPA_FNAME' failed."
+      exit 1
+    fi
+    cat << EOF > "$NET_INTERFACE_FILE"
+  auto wlan0
+   iface wlan0 inet dhcp
+   wpa-conf "$WPA_LOCATION/$WPA_FNAME"
+EOF
+    chmod 0600 "$WPA_LOCATION/$WPA_FNAME"
+    chmod 0600 "$NET_INTERFACE_FILE"
+
+    wpa_file="$WPA_LOCATION/$WPA_FNAME"
+    wpa_outfile="$MOUNT/$WPA_SOURCE_FNAME.log"
+  fi
+
+  #/usr/sbin/wpa_supplicant -B -i wlan0 -c $wpa_file > $&>> "$OUTPUT"
+  /usr/sbin/wpa_supplicant -Dnl80211 -i wlan0 -c$wpa_file > $OUTPUT 2>&1
+
+  if [ $? -ne 0 ] ; then
+    logerr "wpa_supplicant failed to create WiFi from $WPA_FNAME"
+    return $FALSE
+  fi
+
+  IP=$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+  log "IP Address = $IP"
+  
+  return $TRUE
+}
+
+function createWiFi() {
+  # Search mount for files.
+
+  if [ -f "$MOUNT/$NMC_SOURCE_FNAME" ]; then
+    logdebug "Using file $NMC_SOURCE_FNAME"
+    # Create NMCLI wifi
+    source "$MOUNT/$NMC_SOURCE_FNAME"
+    if [ -z "$SSID" ]; then
+      logerr "No SSID in $NMC_SOURCE_FNAME"
+      return $FALSE
+    fi
+    if [ -z "$PASSWORD" ]; then
+      logerr "No PASSWORD in $NMC_SOURCE_FNAME"
+      return $FALSE
+    fi
+    createWiFi_nmcli "$SSID" "$PASSWORD"
+  elif [ -f "$MOUNT/$WPA_SOURCE_FNAME" ]; then
+    logdebug "Using file $WPA_SOURCE_FNAME"
+    # Create WPA wifi
+    createWiFi_WPA
+  else
+    # May not want to log this error, incase someone just inserts a card
+    logerr "No file $NMC_SOURCE_FNAME or $WPA_SOURCE_FNAME on USB drive"
+  fi
+
+  return $TRUE
+}
+
+function mount_dev() {
+
+  logdebug "Mount $*"
+
+  if [ -z "$1" ]; then
+    return $FALSE
+  fi
+
+  mount $1 -o rw,X-mount.mkdir $MOUNT
+  if [ $? -ne 0 ] ; then
+    logerr "Failed to mount $1 to $MOUNT"
+    return $FALSE
+  fi
+
+  # Set output to mounted filesystem, and delete if exists
+  OUTPUT="$MOUNT/$LOG"
+  if [ -f "$OUTPUT" ]; then
+   rm "$OUTPUT" > /dev/null 2>&1
+  fi
+
+  return $TRUE
+}
+
+function unmount_dev() {
+
+  logdebug "UnMount $*"
+
+  if [ -z "$1" ]; then
+    return $FALSE
+  fi
+
+  umount $1
+  if [ $? -ne 0 ] ; then
+    logerr "Faied to unmount $1"
+    return $FALSE
+  fi
+
+  OUTPUT="/tmp/$LOG"
+
+  return $TRUE
+}
+
+# Below searches for unmounted devices starting with 's'  /dev/sda1 /dev/sda2 etc
+function search_device_to_mount() {
+  sudo lsblk  --noheadings --raw \
+  | awk '$1~/s.*[[:digit:]]/ && $7=="" {print $1}' \
+  | xargs -I {} file -s /dev/{} \
+  | grep FAT \
+  | awk '{print $1}' \
+  | tr -d ':' \
+  | while IFS= read -r device
+  do 
+    if mount_dev $device; then
+      if createWiFi; then 
+        exit $TRUE
+      fi
+      umount_dev $MOUNT
+    fi
+  done
+
+  return $FALSE
+}
+
+
+logdebug "------ `date` ------"
+logdebug "$0 $@" 
+
+case $1 in
+  systemd|cron)
+    # We were started by systemd or cron.
+    logdebug "search all drives"
+    if ! search_device_to_mount; then cleanup; exit $FALSE; fi
+  ;;
+  sd*)
+    # started udev ie param $1 is disk sd1
+    logdebug "try mount /dev/$1"
+    if ! mount_dev /dev/$1; then cleanup; exit $FALSE; fi
+    logdebug "try create wifi"
+    if ! createWiFi; then cleanup; exit $FALSE; fi
+  ;;
+  install)
+    # install self
+    #/etc/udev/rules.d/98-usb-disk-mount.rules
+    echo "ACTION==\"add\", SUBSYSTEM==\"block\", KERNEL==\"sd?[0-9]\", ATTRS{removable}==\"1\", RUN+=\"$(readlink -f "$0") %k\"" >> "$UDEV_RULE"
+    chmod 644 "$UDEV_RULE"
+    chown root:root "$UDEV_RULE"
+  ;;
+  uninstall)
+    # uninstall self
+    rm "$UDEV_RULE"
+  ;;
+  *)
+    # No params
+    log "nothing"
+  ;;
+esac
+
+cleanup
+
+logdebug "------ END ------"

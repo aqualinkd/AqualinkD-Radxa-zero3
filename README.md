@@ -40,3 +40,39 @@ curl -sO https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/refs/he
 ```
 
 Once complete, burn image to CF or eMMC with your preferred tool.
+
+## Running in Container
+Using a VM is fine, using a docker you will need to pass true root privileges.
+
+ie
+`docker run -it --privileged -v ~/Downloads:/tmp/Downloads ubuntu:latest`
+
+In the container:
+```
+apt-get update
+apt-get install patch curl xz-utils fdisk sudo -y
+cd ~ && mkdir radxa-os-patched && cd radxa-os-patched
+curl -sO https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/refs/heads/main/patchImage.sh && chmod 755 patchImage.sh && sudo ./patchImage.sh
+Answer script prompts
+Copy the patched image out of the container into my host Downloads folder: cp ./radxa-zero3_debian_bullseye_cli_b6.img.xz /tmp/Downloads/
+```
+
+## System udates
+Radxa recomends using `rsetup` over `apt upgrade`.  Both of which can kill any changes made by these patches.
+If you do run either please check the following files BEFORE YOU REBOOT.
+
+Current known issues.
+
+#### U-Boot menu.  
+Runing `rsetup -> system -> system update` will enable u-boot menu again, you can disable by the following
+
+look in `/boot/extlinux/extlinux.conf`, first few lines you should see the following
+```
+prompt 0 
+timeout 0
+```
+If they are set back to the default `1` and `10`, then your system will not boot with anything attached to the serial pins 8 & 10, like a RS485 hat.  
+To Fix Please modify `/usr/share/u-boot-menu/conf.d/radxa.conf`, set them both to 0 and run `u-boot-update`, then check `/boot/extlinux/extlinux.conf` and make sure that has the appropriate values.
+
+#### WiFi
+Running `apt upgrade` seems to disable wifi.  you can use `nmcli` to reenable.
