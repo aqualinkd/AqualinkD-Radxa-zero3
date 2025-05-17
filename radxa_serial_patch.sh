@@ -89,7 +89,7 @@ function patchFile() {
   if [ ! -f ./"$filename".diff ]; then
     msg "Downloading patch for '$filename'"
     #curl --fail --silent --show-error "https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/main/$filename.diff" -o ./"$filename".diff 1>&2
-    curl -fsSL -H "Accept: application/vnd.github.raw" "$OWN_REPO/contents/$filename.diff" ./"$filename".diff 1>&2
+    curl -fsSL -H "Accept: application/vnd.github.raw" "$REPO/contents/$filename.diff" -o ./"$filename".diff 1>&2
   fi
 
   if [ -f ./"$filename".diff ]; then

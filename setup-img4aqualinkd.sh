@@ -167,6 +167,7 @@ function cleanup() {
 msg "Mounting $1"
 mountImage $1
 
+
 msg "Renaming host to aqualinkd"
 sed -i 's/radxa-zero3/aqualinkd/g' $MOUNT/$HOSTS
 sed -i 's/radxa-zero3/aqualinkd/g' $MOUNT/$HOSTNAME
@@ -175,12 +176,13 @@ sed -i 's/radxa-zero3/aqualinkd/g' $MOUNT/$HOSTNAME
 # Install patchImage script
 msg "Installing radxa_serial_patch"
 curl -fsSL -H "Accept: application/vnd.github.raw" "$OWN_REPO/contents/radxa_serial_patch.sh" -o $MOUNT/usr/local/bin/radxa_serial_patch
+chmod 755 $MOUNT/usr/local/bin/radxa_serial_patch
 
 # Install auto-wifi-setip script
 msg "Installing auto-wifi-setup"
 curl -fsSL -H "Accept: application/vnd.github.raw" "$OWN_REPO/contents/wifi-mount/auto-wifi-connect.sh" -o $MOUNT/usr/local/bin/auto-wifi-connect
 #cp /nas/data/Development/Raspberry/AqualinkD-Radxa-zero3/wifi-mount/auto-wifi-connect.sh $MOUNT/usr/local/bin/auto-wifi-connect
-chmod u+x $MOUNT/usr/local/bin/auto-wifi-connect
+chmod 755 $MOUNT/usr/local/bin/auto-wifi-connect
 chroot $MOUNT /usr/local/bin/auto-wifi-connect install
 
 
