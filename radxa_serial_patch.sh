@@ -324,10 +324,7 @@ checkCommand patch
 checkCommand curl
 #checkCommand xz
 
-
-echo "-- $* --"
-
-if [ ! $1 ]; then
+if [ $# -eq 0 ] || [ -z "$1" ]; then
   #echo "?"
   read -rep 'Patch Image or running System? (I/S) ' -n 1
   if [[ $REPLY =~ ^[Ss]$ ]]; then
