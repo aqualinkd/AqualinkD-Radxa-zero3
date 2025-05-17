@@ -324,6 +324,9 @@ checkCommand patch
 checkCommand curl
 #checkCommand xz
 
+
+echo "-- $* --"
+
 if [ ! $1 ]; then
   #echo "?"
   read -rep 'Patch Image or running System? (I/S) ' -n 1

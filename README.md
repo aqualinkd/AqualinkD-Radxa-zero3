@@ -57,6 +57,8 @@ Answer script prompts
 Copy the patched image out of the container into my host Downloads folder: cp ./radxa-zero3_debian_bullseye_cli_b6.img.xz /tmp/Downloads/
 ```
 
+#curl -fsSL https://raw.githubusercontent.com/aqualinkd/AqualinkD-Radxa-zero3/refs/heads/main/radxa_serial_patch.sh | sudo bash -s
+
 ## System udates
 Radxa recomends using `rsetup` over `apt upgrade`.  Both of which can kill any changes made by these patches.
 If you do run either please check the following files BEFORE YOU REBOOT.
