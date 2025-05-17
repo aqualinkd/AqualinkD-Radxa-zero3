@@ -12,7 +12,7 @@
 # and setup wifi if found
 #
 
-VERSION="0.1"
+VERSION="1.0"
 
 #MOUNT="/tmp/wpa_supplicant"
 

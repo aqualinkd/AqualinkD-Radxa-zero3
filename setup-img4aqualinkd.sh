@@ -1,5 +1,7 @@
 #!/bin/bash
 
+VERSION="1.0"
+
 REPO="https://api.github.com/repos/AqualinkD/AqualinkD"
 OWN_REPO="https://api.github.com/repos/AqualinkD/AqualinkD-Radxa-zero3"
 TEMP_INSTALL="/tmp/aqualinkd"

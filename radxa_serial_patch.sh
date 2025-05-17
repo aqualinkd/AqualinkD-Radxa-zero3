@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=0.2
+VERSION="1.0"
 
 PANFROST="/etc/modprobe.d/panfrost.conf"
 UBOOT_MENU="/usr/share/u-boot-menu/conf.d/radxa.conf"
