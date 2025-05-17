@@ -186,4 +186,7 @@ chroot $MOUNT /usr/local/bin/auto-wifi-connect install
 msg "Installing AqualinkD"
 download_install_aqualinkd
 
+cleanup
+
+msg "Finished installing AqualinkD onto $1"
 #curl -fsSL https://install.aqualinkd.com | /usr/sbin/chroot $MOUNT bash -s -- latest

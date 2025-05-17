@@ -9,6 +9,8 @@ KERNEL_CMDLINE="/etc/kernel/cmdline"
 EXTLINUX_CONFIG="/boot/extlinux/extlinux.conf"
 UART2="/boot/dtbo/rk3568-uart2-m0.dtbo"
 
+REPO="https://api.github.com/repos/AqualinkD/AqualinkD-Radxa-zero3"
+
 MOUNT="./tmp-mnt"
 
 TRUE=0
@@ -86,7 +88,8 @@ function patchFile() {
   # Try to download if missing
   if [ ! -f ./"$filename".diff ]; then
     msg "Downloading patch for '$filename'"
-    curl --fail --silent --show-error "https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/main/$filename.diff" -o ./"$filename".diff 1>&2
+    #curl --fail --silent --show-error "https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/main/$filename.diff" -o ./"$filename".diff 1>&2
+    curl -fsSL -H "Accept: application/vnd.github.raw" "$OWN_REPO/contents/$filename.diff" ./"$filename".diff 1>&2
   fi
 
   if [ -f ./"$filename".diff ]; then
