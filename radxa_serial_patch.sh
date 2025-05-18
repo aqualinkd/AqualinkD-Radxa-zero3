@@ -371,14 +371,16 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   showUbootupdate=$(enableUART2)
 fi
 
-read -rep 'Do you want to create a WiFi connection? (y/n) ' -n 1
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-  if [ $patchImage -eq $TRUE ]; then
-    createWiFi_NMC
-  else
-    createWiFi_NMCLI
+if [ $patchImage -eq $TRUE ]; then
+  read -rep 'Do you want to create a WiFi connection? (y/n) ' -n 1
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    if [ $patchImage -eq $TRUE ]; then
+      createWiFi_NMC
+    else
+      createWiFi_NMCLI
+    fi
+    showWifi=$FALSE
   fi
-  showWifi=$FALSE
 fi
 
 # rename host
