@@ -327,13 +327,13 @@ checkCommand curl
 
 # Check for newer version
 
-latest_version=$(curl -fsSL -H "Accept: application/vnd.github.raw" "https://api.github.com/repos/AqualinkD/AqualinkD-Radxa-zero3/contents/radxa_serial_patch" 2>/dev/null | grep VERSION | awk -F'"' '{print $2}')
+latest_version=$(curl -fsSL -H "Accept: application/vnd.github.raw" "https://api.github.com/repos/AqualinkD/AqualinkD-Radxa-zero3/contents/radxa-serial-patch" 2>/dev/null | grep VERSION | awk -F'"' '{print $2}')
 
 if [ -n "$latest_version" ]; then
   if (( $(echo "$latest_version > $VERSION" | bc -l) )); then
     msg "New Version of this script exists, latest=$latest_version, current=$VERSION"
     msg "Please use the following to download & install :-"
-    msg "    curl -fsSL -H https://raw.githubusercontent.com/aqualinkd/AqualinkD-Radxa-zero3/refs/heads/main/radxa_serial_patch -o $0"
+    msg "    curl -fsSL -H https://raw.githubusercontent.com/aqualinkd/AqualinkD-Radxa-zero3/refs/heads/main/radxa-serial-patch -o $0"
     msg ""
     read -rep 'Do you want to continue? (y/n) ' -n 1
     if [[ $REPLY =~ ^[Nn]$ ]]; then
