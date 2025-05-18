@@ -65,6 +65,11 @@ curl -fsSL https://raw.githubusercontent.com/aqualinkd/AqualinkD-Radxa-zero3/ref
 Radxa recomends using `rsetup` over `apt upgrade`.  Both of which can kill any changes made by these patches.
 If you do run either please check the following files BEFORE YOU REBOOT.
 
+In most cases you can simply run the `radxa-serial-patch` again selecting `s` (for system) at the first prompt, this will patch a running system.
+```
+curl -sO https://raw.githubusercontent.com/aqualinkd/AqualinkD-Radxa-zero3/refs/heads/main/radxa-serial-patch && chmod 755 radxa-serial-patch && sudo ./radxa-serial-patch
+```
+
 Current known issues.
 
 #### U-Boot menu.  

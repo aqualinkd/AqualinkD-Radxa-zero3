@@ -327,7 +327,7 @@ checkCommand curl
 
 # Check for newer version
 
-latest_version=$(curl -fsSL -H "Accept: application/vnd.github.raw" "https://api.github.com/repos/AqualinkD/AqualinkD-Radxa-zero3/contents/radxa-serial-patch" 2>/dev/null | grep VERSION | awk -F'"' '{print $2}')
+latest_version=$(curl -fsSL -H "Accept: application/vnd.github.raw" "https://api.github.com/repos/AqualinkD/AqualinkD-Radxa-zero3/contents/radxa-serial-patch" 2>/dev/null | grep -m 1 VERSION | awk -F'"' '{print $2}')
 
 if [ -n "$latest_version" ]; then
   if (( $(echo "$latest_version > $VERSION" | bc -l) )); then
