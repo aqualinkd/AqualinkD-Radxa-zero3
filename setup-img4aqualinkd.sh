@@ -194,3 +194,13 @@ cleanup
 
 msg "Finished installing AqualinkD onto $1"
 #curl -fsSL https://install.aqualinkd.com | /usr/sbin/chroot $MOUNT bash -s -- latest
+
+
+# Running rsetup -> upgrade should fix the below.
+# Install signing keyring
+#keyring="$(mktemp)"
+#version="$(curl -L https://github.com/radxa-pkg/radxa-archive-keyring/releases/latest/download/VERSION)"
+#curl -L --output "$keyring" "https://github.com/radxa-pkg/radxa-archive-keyring/releases/latest/download/radxa-archive-keyring_${version}_all.deb"
+#sudo dpkg -i "$keyring"
+#rm -f "$keyring"
+

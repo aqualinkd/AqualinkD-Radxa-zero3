@@ -116,7 +116,7 @@ function enableUART2() {
   fi
 
   # If we are in amd64 arch, we can run u-boot-update, if not force it manually
-  if ! command -v dpkg 2>&1 >/dev/null; then
+  if command -v dpkg 2>&1 >/dev/null; then
     ARCH=$(dpkg --print-architecture)
   else
     ARCH=unknown
@@ -129,7 +129,7 @@ function enableUART2() {
       echo $FALSE
     ;;
     *)
-      msg "WARNING: Source OS is not amd64, forcing a extLinux configuration, please run 'u-boot-update' once system is running!"
+      msg "WARNING: Source OS is not arm64, forcing a extLinux configuration, please run 'u-boot-update' once system is running!"
       patchFile "$EXTLINUX_CONFIG"
       echo $TRUE
     ;;
