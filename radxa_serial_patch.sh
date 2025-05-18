@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.0"
+VERSION="1.0"  # Must be a float
 
 PANFROST="/etc/modprobe.d/panfrost.conf"
 UBOOT_MENU="/usr/share/u-boot-menu/conf.d/radxa.conf"
@@ -324,6 +324,23 @@ checkCommand patch
 checkCommand curl
 #checkCommand xz
 
+
+# Check for newer version
+
+latest_version=$(curl -fsSL -H "Accept: application/vnd.github.raw" "https://api.github.com/repos/AqualinkD/AqualinkD-Radxa-zero3/contents/radxa_serial_patch" 2>/dev/null | grep VERSION | awk -F'"' '{print $2}')
+
+if [ -n "$latest_version" ]; then
+  if (( $(echo "$latest_version > $VERSION" | bc -l) )); then
+    msg "New Version of this script exists, latest=$latest_version, current=$VERSION"
+    msg "Please use the following to download & install :-"
+    msg "    curl -fsSL -H https://raw.githubusercontent.com/aqualinkd/AqualinkD-Radxa-zero3/refs/heads/main/radxa_serial_patch -o $0"
+    msg ""
+    read -rep 'Do you want to continue? (y/n) ' -n 1
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+      exit $TRUE
+    fi
+  fi
+fi
 
 if [ $# -eq 0 ] || [ -z "$1" ]; then
   #echo "?"
