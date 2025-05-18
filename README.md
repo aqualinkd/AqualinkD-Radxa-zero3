@@ -23,9 +23,9 @@ https://github.com/radxa-build/radxa-zero3/releases/tag/b6
 # To Use
 This script will only work on a Linux device, ARM64 is preferred, but will work on AMD64,ARMHF,x86
 
-To use, simply download `patchImage.sh` script and run it passing in the Radxa OS image to patch ie
+To use, simply download `radxa-serial-patch` script and run it passing in the Radxa OS image to patch ie
 ```
-./patchImage.sh radxa-zero3_debian_bullseye_cli_b6.img
+./radxa-serial-patch radxa-zero3_debian_bullseye_cli_b6.img
 ```
 The script will download any patches it needs from this repo, so no need to clone the repo if you don't want to.
 
@@ -36,7 +36,7 @@ The script can also download the appropriate image if you want. For an all inclu
 cd ~ && mkdir radxa-os-patched && cd radxa-os-patched
 ```
 ```
-curl -sO https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/refs/heads/main/patchImage.sh && chmod 755 patchImage.sh && sudo ./patchImage.sh
+curl -sO https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/refs/heads/main/radxa-serial-patch && chmod 755 radxa-serial-patch && sudo ./radxa-serial-patch
 ```
 
 Once complete, burn image to CF or eMMC with your preferred tool.
@@ -52,12 +52,14 @@ In the container:
 apt-get update
 apt-get install patch curl xz-utils fdisk sudo -y
 cd ~ && mkdir radxa-os-patched && cd radxa-os-patched
-curl -sO https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/refs/heads/main/patchImage.sh && chmod 755 patchImage.sh && sudo ./patchImage.sh
+curl -sO https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/refs/heads/main/radxa-serial-patch && chmod 755 radxa-serial-patch && sudo ./radxa-serial-patch
 Answer script prompts
 Copy the patched image out of the container into my host Downloads folder: cp ./radxa-zero3_debian_bullseye_cli_b6.img.xz /tmp/Downloads/
 ```
 
-#curl -fsSL https://raw.githubusercontent.com/aqualinkd/AqualinkD-Radxa-zero3/refs/heads/main/radxa_serial_patch.sh | sudo bash -s
+<!--
+curl -fsSL https://raw.githubusercontent.com/aqualinkd/AqualinkD-Radxa-zero3/refs/heads/main/radxa_serial_patch.sh | sudo bash -s
+-->
 
 ## System udates
 Radxa recomends using `rsetup` over `apt upgrade`.  Both of which can kill any changes made by these patches.

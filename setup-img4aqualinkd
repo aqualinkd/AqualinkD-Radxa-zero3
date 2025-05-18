@@ -199,9 +199,9 @@ sed -i 's/radxa-zero3/aqualinkd/g' $MOUNT/$HOSTNAME
 
 
 # Install patchImage script
-msg "Installing radxa_serial_patch"
-curl -fsSL -H "Accept: application/vnd.github.raw" "$OWN_REPO/contents/radxa_serial_patch" -o $MOUNT/usr/local/bin/radxa_serial_patch
-chmod 755 $MOUNT/usr/local/bin/radxa_serial_patch
+msg "Installing radxa-serial-patch"
+curl -fsSL -H "Accept: application/vnd.github.raw" "$OWN_REPO/contents/radxa-serial-patch" -o $MOUNT/usr/local/bin/radxa-serial-patch
+chmod 755 $MOUNT/usr/local/bin/radxa-serial-patch
 
 # Install auto-wifi-setip script
 msg "Installing auto-wifi-setup"
