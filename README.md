@@ -70,7 +70,7 @@ In most cases you can simply run the `radxa-serial-patch` again selecting `s` (f
 curl -sO https://raw.githubusercontent.com/aqualinkd/AqualinkD-Radxa-zero3/refs/heads/main/radxa-serial-patch && chmod 755 radxa-serial-patch && sudo ./radxa-serial-patch
 ```
 
-Current known issues.
+Current known issues caused by `apt upgrade` or `rsetup -> update`
 
 #### U-Boot menu.  
 Runing `rsetup -> system -> system update` will enable u-boot menu again, you can disable by the following

@@ -1,10 +1,21 @@
 #!/bin/bash
+#
+#  This is in 2 stages.
+#  Run on an image file that's been prepared with radxa-serial-patch first.
+#  radxa-serial-patch <img-file>
+#  setup-img4aqualinkd <img-file>
+#  --- boot image --
+#  run script again on booted image with --finalize flag
+#  curl -fsSL https://raw.githubusercontent.com/aqualinkd/AqualinkD-Radxa-zero3/refs/heads/main/setup-img4aqualinkd | sudo bash -s -- --finalize
+#
 
 VERSION="1.0"
 
 REPO="https://api.github.com/repos/AqualinkD/AqualinkD"
 OWN_REPO="https://api.github.com/repos/AqualinkD/AqualinkD-Radxa-zero3"
 TEMP_INSTALL="/tmp/aqualinkd"
+
+EXT_ANTENNA_OVERLAY=/boot/dtbo/radxa-zero3-external-antenna.dtbo
 
 MOUNT="./tmp-mnt"
 HOSTS="/etc/hosts"
@@ -13,14 +24,19 @@ HOSTNAME="/etc/hostname"
 TRUE=0
 FALSE=1
 
+red=$'\e[31m'
+green=$'\e[32m'
+reset=$'\e[0m'
+
+
 _imagefile="";
 
 function msg() {
-  echo -e "$@" >&2
+  echo -e "${green}$@${reset}" >&2
 }
 
 function logerr() {
-  echo "Error: $@" 1>&2;
+  echo -e "${red}Error: $@${reset}" >&2
 }
 
 function checkCommand() {
@@ -31,23 +47,6 @@ function checkCommand() {
 
   return $TRUE
 }
-
-
-if command -v dpkg 2>&1 >/dev/null; then
-  ARCH=$(dpkg --print-architecture)
-  
-  if [ "$ARCH" != "arm64" ]; then
-     logerr "WARNING: Source OS $ARCH, this will only work on arm64"
-     exit $FALSE
-  fi
-fi
-
-if [ "$EUID" -ne 0 ]; then
-  logerr "Please run as root"
-  exit $FALSE
-fi
-
-
 
 function getOffset() {
   file=$1
@@ -161,10 +160,108 @@ function cleanup() {
 
 
 
+function finalize() {
+  
+  msg "Finishing Image setup"
+
+  # Install cron
+  #msg "Installing cron"
+  #apt-get update --assume-yes
+  #apt-get install cron --assume-yes
+
+  # upgrade distribution (Run rsetup) or apt-get dist-upgrade
+  msg "Upgrading distribution"
+  #apt-get dist-upgrade --allow-downgrades --assume-yes
+
+  # run radxa-serial-patch (fix the f-up from above)
+  msg "Fixing distribution"
+  bash /usr/local/bin/radxa-serial-patch -repatch
+  update-initramfs -u
+
+  # The dist-upgrade will create multiple kernels in the u-boot menu, that will slow down u-boot, sometimes giving it time
+  # to capture the serial input.  So set u-boot menu to last kernel.
+  if grep -q "^U_BOOT_ENTRIES=\"1\"" "/etc/default/u-boot"; then
+    msg "u-boot menu already set to 1 kernal"
+  else
+    msg "Setting u-boot menu to 1 kernal"
+    echo -e "\nU_BOOT_ENTRIES=\"1\"\n" >> /etc/default/u-boot
+    u-boot-update
+  fi
+
+  # Since this is probably run from curl, < /dev/tty overcomes the pipe using stdin.
+
+  if [ -f "$EXT_ANTENNA_OVERLAY.disabled" ]; then
+    read -rep "${green}Do you want to enable external antenna? (y/n)${reset} " -n 1 < /dev/tty
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      mv "$EXT_ANTENNA_OVERLAY.disabled" "$EXT_ANTENNA_OVERLAY"
+      u-boot-update
+    fi
+  elif [ -f "$EXT_ANTENNA_OVERLAY" ]; then
+    msg "External antenna already enabled"
+  else
+    msg "Can't find antenna already overlay"
+  fi
+
+  # On extlinux.conf should think about taking out label l1 and l1r as well, those seem to slow down the u-boot a touch
+  # to the timeput 0 & prompt 0 don;t always work.
+
+  msg "Cleanup journal and history"
+  # clean journal
+  journalctl --flush --rotate --vacuum-time=1s
+  journalctl --user --flush --rotate --vacuum-time=1s
+
+  # clean ~/.bash_history
+  rm /home/radxa/.bash_history 2> /dev/null
+  rm /root/.bash_history 2> /dev/null
+
+  msg "Finished!"
+  
+  # Check cron.d as well.
+    
+  # Run rsetup / apt-get upgrade
+    # apt-get update
+    # apt-get dist-upgrade --allow-downgrades
+
+  # run radxa-serial-patch (fix the f-up from above)
+
+  # enable antenna
+    # In /boot/extlinux/extlinux.conf
+    # Change fdtoverlays  /boot/dtbo/rk3568-uart2-m0.dtbo
+    # to     fdtoverlays  /boot/dtbo/radxa-zero3-external-antenna.dtbo /boot/dtbo/rk3568-uart2-m0.dtbo
+    # On extlinux.conf should think about taking out label l1 and l1r as well, those seem to slow down the u-boot a touch
+    # to the timeput 0 & prompt 0 don;t always work.
+
+  # clean journal
+    #journalctl --flush --rotate --vacuum-time=1s
+    #journalctl --user --flush --rotate --vacuum-time=1s
+
+  # clean ~/.bash_history
+    # rm /home/radxa/.bash_history
+    # rm /root/.bash_history
+}
+
+
 #############
 ## Main
 ##
+##
+##
 #############
+
+
+if command -v dpkg 2>&1 >/dev/null; then
+  ARCH=$(dpkg --print-architecture)
+  
+  if [ "$ARCH" != "arm64" ]; then
+     logerr "WARNING: Source OS $ARCH, this will only work on arm64"
+     exit $FALSE
+  fi
+fi
+
+if [ "$EUID" -ne 0 ]; then
+  logerr "Please run as root"
+  exit $FALSE
+fi
 
 mountOnly=$FALSE;
 
@@ -178,12 +275,17 @@ while [[ $# -gt 0 ]]; do
     msg "Unmounted $MOUNT"
     exit $TRUE
   ;;
+  --finalize | --finish | finalize)
+    finalize
+    exit $TRUE
+  ;;
   *)
     _imagefile=$1
   ;;
   esac
   shift
 done
+
 
 
 msg "Mounting $_imagefile"

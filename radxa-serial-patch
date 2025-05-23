@@ -103,6 +103,7 @@ function patchFile() {
 }
 
 function enableUART2() {
+  
   patchFile "$UBOOT_MENU"
   patchFile "$UBOOT_UPDATE"
   patchFile "$KERNEL_CMDLINE"
@@ -135,7 +136,7 @@ function enableUART2() {
     ;;
   esac
 
-  return
+  return 
 }
 
 
@@ -344,7 +345,7 @@ fi
 
 if [ $# -eq 0 ] || [ -z "$1" ]; then
   #echo "?"
-  read -rep 'Patch Image or running System? (I/S) ' -n 1
+  read -rep 'Patch Image or current System? (I/S) ' -n 1
   if [[ $REPLY =~ ^[Ss]$ ]]; then
     patchImage=$FALSE
   fi
@@ -352,7 +353,14 @@ fi
 
 if [ "$1" = "-s" ] || [ "$1" = "-S" ]; then
    patchImage=$FALSE
+elif [ "$1" = "-repatch" ] || [ "$1" = "--repatch" ]; then
+  # This is used to re-patch a running system
+  patchImage=$FALSE
+  patchPanfrost=$TRUE
+  patchUart=$TRUE
+  showInitramfs=$FALSE
 fi
+
 
 if [ $patchImage -eq $FALSE ]; then
   MOUNT="/"
@@ -367,36 +375,44 @@ if [ $patchImage -eq $TRUE ]; then
 fi
 
 
-read -rep 'Do you want to disable panfrost driver? (y/n) ' -n 1
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+if [ "$patchPanfrost" -eq "$TRUE" ]; then
   patchFile "$PANFROST"
-  showInitramfs=$TRUE
 else
-  showInitramfs=$FALSE
-fi
+  read -rep 'Do you want to disable panfrost driver? (y/n) ' -n 1
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    patchFile "$PANFROST"
+    showInitramfs=$TRUE
+  else
+   showInitramfs=$FALSE
+  fi
+fi 
 
 # Don't seem to need to run this, would also only work on amr64 arch so leaving it out.
 # chroot ./tmp-mnt /usr/sbin/update-initramfs -u
 # Since we did run command, show update message
 
 
-read -rep $'If you want to use standard UART2 for RS485/232 for GPIO pins 8 & 10 (ie for a RS485 Hat) then you need to enable it now.
-This will also disable U-Boot menu over serial connection & Radxa serial debugging.
-Do you want to enable UART2? (y/n) ' -n 1
-
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+if [ "$patchUart" -eq "$TRUE" ]; then
   showUbootupdate=$(enableUART2)
-fi
+else
+  read -rep $'If you want to use standard UART2 for RS485/232 for GPIO pins 8 & 10 (ie for a RS485 Hat) then you need to enable it now.
+  This will also disable U-Boot menu over serial connection & Radxa serial debugging.
+  Do you want to enable UART2? (y/n) ' -n 1
 
-if [ $patchImage -eq $TRUE ]; then
-  read -rep 'Do you want to create a WiFi connection? (y/n) ' -n 1
   if [[ $REPLY =~ ^[Yy]$ ]]; then
-    if [ $patchImage -eq $TRUE ]; then
-      createWiFi_NMC
-    else
-      createWiFi_NMCLI
+    showUbootupdate=$(enableUART2)
+  fi
+
+  if [ $patchImage -eq $TRUE ]; then
+    read -rep 'Do you want to create a WiFi connection? (y/n) ' -n 1
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      if [ $patchImage -eq $TRUE ]; then
+        createWiFi_NMC
+      else
+        createWiFi_NMCLI
+      fi
+      showWifi=$FALSE
     fi
-    showWifi=$FALSE
   fi
 fi
 

@@ -13,6 +13,7 @@ MOUNT="./tmp-mnt"
 
 PANFROST="/etc/modprobe.d/panfrost.conf"
 UBOOT_MENU="/usr/share/u-boot-menu/conf.d/radxa.conf"
+UBOOT_DEFAULTS="/etc/default/u-boot"
 UBOOT_UPDATE="/usr/sbin/u-boot-update"
 KERNEL_CMDLINE="/etc/kernel/cmdline"
 EXTLINUX_CONFIG="/boot/extlinux/extlinux.conf"
@@ -118,6 +119,12 @@ function enableUART2() {
       error "Can't find '$UART2' ($UART2.disabled)"
     fi
   fi
+
+  # Modify u-boot-default. Radxa overwrites these, but put them here incase they fix their shit in the future
+  echo -e "\n# $UBOOT_MENU will overwrite some of the values in this file" \
+           "\nU_BOOT_ENTRIES=\"1\"" \
+           "\nU_BOOT_PROMPT=\"0\"" \
+           "\nU_BOOT_TIMEOUT=\"0\"\n" >> $MOUNT/$UBOOT_DEFAULTS
 
   # If we are in amd64 arch, we can run u-boot-update, if not force it manually
   if ! command -v dpkg 2>&1 >/dev/null; then
