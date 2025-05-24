@@ -173,6 +173,9 @@ function finalize() {
   msg "Upgrading distribution"
   apt-get dist-upgrade --allow-downgrades --assume-yes
 
+  apt autoremove --purge --assume-yes
+  apt clean --assume-yes
+
   # run radxa-serial-patch (fix the f-up from above)
   msg "Fixing distribution"
   bash /usr/local/bin/radxa-serial-patch -repatch
