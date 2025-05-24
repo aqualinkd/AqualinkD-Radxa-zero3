@@ -165,9 +165,9 @@ function finalize() {
   msg "Finishing Image setup"
 
   # Install cron
-  #msg "Installing cron"
-  #apt-get update --assume-yes
-  #apt-get install cron --assume-yes
+  msg "Installing cron"
+  apt-get update --assume-yes
+  apt-get install cron --assume-yes
 
   # upgrade distribution (Run rsetup) or apt-get dist-upgrade
   msg "Upgrading distribution"
