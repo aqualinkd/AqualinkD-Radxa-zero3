@@ -105,6 +105,10 @@ function patchFile() {
   else
     error "No diff file '$filename.diff'"
   fi
+
+  if [ -f ./"$filename".diff ]; then
+    rm ./"$filename".diff 1>&2
+  fi
 }
 
 function enableUART2() {

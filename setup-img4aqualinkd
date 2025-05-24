@@ -171,7 +171,7 @@ function finalize() {
 
   # upgrade distribution (Run rsetup) or apt-get dist-upgrade
   msg "Upgrading distribution"
-  #apt-get dist-upgrade --allow-downgrades --assume-yes
+  apt-get dist-upgrade --allow-downgrades --assume-yes
 
   # run radxa-serial-patch (fix the f-up from above)
   msg "Fixing distribution"
