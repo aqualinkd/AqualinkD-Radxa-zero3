@@ -12,7 +12,7 @@
 # and setup wifi if found
 #
 
-VERSION="1.0"
+VERSION="1.1"
 
 #MOUNT="/tmp/wpa_supplicant"
 
@@ -26,10 +26,15 @@ WPA_FNAME="wpa_supplicant-wlan0"
 WPA_LOCATION="/etc/wpa_supplicant"
 NET_INTERFACE_FILE="/etc/network/interfaces.d/wlan0.conf"
 
+FULLSELF=$(readlink -f $0)
 SELF=$(basename "$0")
 SELFBN="${SELF%.*}"
 LOG="${SELFBN}.log"
 MOUNT="/tmp/${SELFBN}_mount"
+
+# Full path and script name to use for installation
+INSTALL_LOCATION="/usr/local/bin/auto-wifi-connect"
+
 
 # Why I used 71 below AQD in ascii / 3.  (65+81+68) / 3 = 71.  Obviously can be any number
 UDEV_RULE="/etc/udev/rules.d/71-${SELFBN}.rules"
@@ -39,7 +44,7 @@ OUTPUT="/tmp/$LOG" # This will get renamed.
 TRUE=0
 FALSE=1
 
-DEBUG=$TRUE
+DEBUG=$FALSE
 
 # check root
 if [ "$EUID" -ne 0 ]; then
@@ -249,9 +254,44 @@ function search_device_to_mount() {
   return $FALSE
 }
 
+function check_wifi() {
+  if ip a | grep wlan0 | grep -q inet; then
+    IP=$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+    logdebug "WiFi connected address $IP"
+    return $TRUE
+  else
+    logdebug "No WiFi connection"
+    return $FALSE
+  fi
+}
+
+function printhelp() {
+  echo "$SELFBN version $VERSION"
+  echo "Usage $SELFBN <option>:-"
+  echo "      cron      --> when running from cron"
+  echo "      sdc1      --> look wifi config for files on sda1"
+  echo "      install   --> Install into udev rules"
+  echo "      uninstall --> uninstall from udev rules"
+  echo "      help      --> this"
+}
+
+
+###################################################################
+#
+#   MAIN
+#
+###################################################################
+
+
 
 logdebug "------ `date` ------"
-logdebug "$0 $@" 
+logdebug "$0 $@"
+
+
+if check_wifi; then
+  echo "Already have WiFi connection"
+  # May want to consider exit at this point
+fi
 
 case $1 in
   systemd|cron)
@@ -277,9 +317,13 @@ case $1 in
     # uninstall self
     rm "$UDEV_RULE"
   ;;
+  help)
+    printhelp
+    exit $TRUE
+  ;;
   *)
-    # No params
-    log "nothing"
+    printhelp
+    exit $TRUE
   ;;
 esac
 
