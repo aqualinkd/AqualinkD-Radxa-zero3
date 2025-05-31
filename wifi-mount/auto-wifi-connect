@@ -287,10 +287,11 @@ function printhelp() {
 logdebug "------ `date` ------"
 logdebug "$0 $@"
 
-
-if check_wifi; then
-  echo "Already have WiFi connection"
-  # May want to consider exit at this point
+if [[ $1 != "install" && $1 != "uninstall" ]]; then
+  if check_wifi; then
+    echo "Already have WiFi connection"
+    # May want to consider exit at this point
+  fi
 fi
 
 case $1 in
