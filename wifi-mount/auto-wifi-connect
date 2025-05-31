@@ -309,7 +309,12 @@ case $1 in
   install)
     # install self
     #/etc/udev/rules.d/98-usb-disk-mount.rules
-    echo "ACTION==\"add\", SUBSYSTEM==\"block\", KERNEL==\"sd?[0-9]\", ATTRS{removable}==\"1\", RUN+=\"$(readlink -f "$0") %k\"" >> "$UDEV_RULE"
+    if [[ $FULLSELF != $INSTALL_LOCATION ]]; then
+      log "Copy $FULLSELF to $INSTALL_LOCATION"
+      cp $FULLSELF $INSTALL_LOCATION
+    fi
+    #echo "ACTION==\"add\", SUBSYSTEM==\"block\", KERNEL==\"sd?[0-9]\", ATTRS{removable}==\"1\", RUN+=\"$(readlink -f "$0") %k\"" > "$UDEV_RULE"
+    echo "ACTION==\"add\", SUBSYSTEM==\"block\", KERNEL==\"sd?[0-9]\", ATTRS{removable}==\"1\", RUN+=\"$INSTALL_LOCATION %k\"" > "$UDEV_RULE"
     chmod 644 "$UDEV_RULE"
     chown root:root "$UDEV_RULE"
   ;;
