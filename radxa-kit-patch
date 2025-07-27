@@ -1,0 +1,104 @@
+#!/bin/bash
+
+# Last update 25 Jul 2025
+VERSION=0.1
+
+#curl -fsSL https://raw.githubusercontent.com/sfeakes/AqualinkD-Radxa-zero3/radxa-kit-patch | sudo bash -s --
+#curl -fsSL http://tiger/scratch/aqualinkd-install/radxa/radxa-kit-patch | sudo bash -s --
+
+WIFI_POWER_FILE="/etc/NetworkManager/conf.d/10-default-wifi-power-save.conf"
+
+FULLSELF=$(readlink -f $0)
+SELF=$(basename "$0")
+
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run as root"
+  exit 1
+fi
+
+log()
+{ 
+  echo "$*"
+  #echo "$*" | systemd-cat -t "$SELF" -p info
+}
+
+
+wifi_powersave()
+{
+  if [ ! -f "$WIFI_POWER_FILE" ]; then
+    log "Turning off WiFi power saving"
+    cat << EOF > "$WIFI_POWER_FILE"
+# Turn off WiFi power saving
+[connection]
+wifi.powersave = 2
+EOF
+    systemctl restart NetworkManager
+  else
+    setting=$(grep "wifi.powersave" "$WIFI_POWER_FILE" | awk 'BEGIN { FS="=" } { gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2 }')
+    if [ ! $setting -eq 2 ]; then
+      log "WiFi power_save already exists"
+      log "Please edit '$WIFI_POWER_FILE' and change 'wifi.powersave = $setting' to 'wifi.powersave = 2'"
+    else
+      log "WiFi power_save already exists and is set correctly"
+    fi
+  fi
+
+  #sudo systemctl restart NetworkManager
+  #sudo iw dev wlan0 get power_save
+}
+
+disable_bluetooth()
+{
+  if systemctl is-active --quiet bluetooth.service; then
+    log "Disabling bluetooth"
+    systemctl stop bluetooth
+    systemctl disable bluetooth
+    systemctl mask dbus-org.bluez.service
+  fi
+}
+
+disable_aic8800()
+{
+  if systemctl is-active --quiet rsetup-aic8800-reset@ttyS1.service; then
+    log "Disabling aic8800"
+    systemctl stop rsetup-aic8800-reset@ttyS1.service
+    systemctl disable rsetup-aic8800-reset@ttyS1.service
+    systemctl mask rsetup-aic8800-reset@ttyS1.service
+  fi
+}
+
+disable_hciattach()
+{
+  if systemctl is-active --quiet rsetup-hciattach@ttyS1.service; then
+    log "Disabling hciattach"
+    systemctl stop rsetup-hciattach@ttyS1.service
+    systemctl disable rsetup-hciattach@ttyS1.service
+  fi
+}
+
+disable_localdns()
+{
+  log "Disabling localDNS cache"
+  systemctl stop systemd-resolved
+  systemctl disable systemd-resolved
+  
+  systemctl stop dnsmasq
+  systemctl disable dnsmasq
+}
+
+# This is kind-a pointless, need to disable at system not user, plus we are root at this point
+disable_pulseaudio()
+{
+  log "Disabling pulseaudio"
+  systemctl --user stop pulseaudio.socket
+  systemctl --user stop pulseaudio.service
+  systemctl --user mask pulseaudio.socket
+}
+
+
+
+wifi_powersave
+disable_bluetooth
+disable_aic8800
+disable_hciattach
+disable_localdns

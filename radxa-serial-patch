@@ -103,7 +103,7 @@ function patchFile() {
 }
 
 function enableUART2() {
-  
+  rtn=$FALSE;
   patchFile "$UBOOT_MENU"
   patchFile "$UBOOT_UPDATE"
   patchFile "$KERNEL_CMDLINE"

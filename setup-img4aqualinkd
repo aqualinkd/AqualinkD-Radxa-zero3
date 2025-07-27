@@ -208,6 +208,28 @@ function finalize() {
   # On extlinux.conf should think about taking out label l1 and l1r as well, those seem to slow down the u-boot a touch
   # to the timeput 0 & prompt 0 don;t always work.
 
+  msg "Disabling unnecessary services"
+  sudo systemctl stop bluetooth
+  sudo systemctl disable bluetooth
+  sudo systemctl mask dbus-org.bluez.service
+  
+  sudo systemctl stop rsetup-aic8800-reset@ttyS1.service
+  sudo systemctl disable rsetup-aic8800-reset@ttyS1.service
+  sudo systemctl mask rsetup-aic8800-reset@ttyS1.service
+  
+  sudo systemctl stop rsetup-hciattach@ttyS1.service
+  sudo systemctl disable rsetup-hciattach@ttyS1.service
+  
+  sudo systemctl stop systemd-resolved
+  sudo systemctl disable systemd-resolved
+  
+  sudo systemctl stop dnsmasq
+  sudo systemctl disable dnsmasq
+  
+  #systemctl --user stop pulseaudio.socket
+  #systemctl --user stop pulseaudio.service
+  #systemctl --user mask pulseaudio.socket
+
   msg "Cleanup journal and history"
   # clean journal
   journalctl --flush --rotate --vacuum-time=1s
