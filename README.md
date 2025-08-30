@@ -19,8 +19,18 @@ This tool patches the standard Radax image to fix all of the above.  All patches
 Radxa Zero3 OS repo.
 https://github.com/radxa-build/radxa-zero3/releases/tag/b6
 
+
 #
-# To Use
+
+# If you trust a 3rd party image.
+If you want Radxa OS image updated with these scripts and have AqualinkD pre-installed, simply download the latest image in the release directory.
+
+https://github.com/aqualinkd/AqualinkD-Radxa-zero3/tree/main/release
+
+#
+# If you don't trust a 3rd party image
+## To build this yourself, please read on.
+
 This script will only work on a Linux device, ARM64 is preferred, but will work on AMD64,ARMHF,x86
 
 To use, simply download `radxa-serial-patch` script and run it passing in the Radxa OS image to patch ie
